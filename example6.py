@@ -3,16 +3,17 @@ import json
 import requests
 from web3 import Web3
 from websockets import connect
+from config import Config
 
 
-# ws_url = 'wss://little-tiniest-snowflake.bsc.discover.quiknode.pro/6d0fe661d7ab2115aafcee849d39369fe9c85551/'
-ws_url = 'wss://side-empty-ensemble.bsc-testnet.discover.quiknode.pro/4711d1023c738d1b9da7e781f6506b76045210b3/'
-# http_url = 'https://little-tiniest-snowflake.bsc.discover.quiknode.pro/6d0fe661d7ab2115aafcee849d39369fe9c85551/'
-http_url = 'https://side-empty-ensemble.bsc-testnet.discover.quiknode.pro/4711d1023c738d1b9da7e781f6506b76045210b3/'
+ws_url = Config.BSC_WSS_URL
+http_url = Config.BSC_HTTP_URL
 web3 = Web3(Web3.HTTPProvider(http_url))
 
 # Used if you want to monitor ETH transactions to a specific address
-account = '<YOUR_PUBLIC_ADDRESS>'
+account = Config.BSC_ACCOUNT_KEY_1
+key = Config.BSC_ACCOUNT_ADDR_1
+account2 = Config.BSC_ACCOUNT_ADDR_2
 
 
 async def get_event():
