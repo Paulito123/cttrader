@@ -4,19 +4,17 @@ import requests
 from web3 import Web3
 from websockets import connect
 from multiprocessing.pool import ThreadPool
+from config import Config
 
 
-# ws_url = 'wss://little-tiniest-snowflake.bsc.discover.quiknode.pro/6d0fe661d7ab2115aafcee849d39369fe9c85551/'
-ws_url = 'wss://side-empty-ensemble.bsc-testnet.discover.quiknode.pro/4711d1023c738d1b9da7e781f6506b76045210b3/'
-# http_url = 'https://little-tiniest-snowflake.bsc.discover.quiknode.pro/6d0fe661d7ab2115aafcee849d39369fe9c85551/'
-# http_url = 'https://side-empty-ensemble.bsc-testnet.discover.quiknode.pro/4711d1023c738d1b9da7e781f6506b76045210b3/'
-http_url = 'https://data-seed-prebsc-1-s1.binance.org:8545/'
+ws_url = Config.BSC_WSS_URL
+http_url = Config.BSC_HTTP_URL
 web3 = Web3(Web3.HTTPProvider(http_url))
 
 # Used if you want to monitor ETH transactions to a specific address
-account = '0xb3e92De232e1Ad705d8F2Cf8AAe1a63a333ccE35'
-key = '0719330acb2bcd93e6afaed202560399cb15f0154246b205ba644444b8bcfaf7'
-account2 = "0x3D0c460919431c54Fbdaaa47c6F260B70F81161D"
+account = Config.BSC_ACCOUNT_KEY_1
+key = Config.BSC_ACCOUNT_ADDR_1
+account2 = Config.BSC_ACCOUNT_ADDR_2
 
 
 def transact_base_currency(from_addr,
