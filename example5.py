@@ -1,28 +1,9 @@
-import multiprocessing
+from eth_account import Account
+import secrets
 
 
-def do_calculation(data):
-    return data * 2
-
-
-def start_process():
-    print('Starting', multiprocessing.current_process().name)
-
-
-if __name__ == '__main__':
-    inputs = list(range(10))
-    print('Input   :', inputs)
-
-    builtin_outputs = map(do_calculation, inputs)
-    print('Built-in:', builtin_outputs)
-
-    pool_size = multiprocessing.cpu_count() * 2
-    pool = multiprocessing.Pool(
-        processes=pool_size,
-        initializer=start_process,
-    )
-    pool_outputs = pool.map(do_calculation, inputs)
-    pool.close()  # no more tasks
-    pool.join()  # wrap up current tasks
-
-    print('Pool    :', pool_outputs)
+priv = secrets.token_hex(32)
+private_key = "0x" + priv
+print ("SAVE BUT DO NOT SHARE THIS:", private_key)
+acct = Account.from_key(private_key)
+print("Address:", acct.address)
