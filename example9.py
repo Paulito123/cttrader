@@ -3,7 +3,8 @@ import json
 import requests
 from web3 import Web3
 from websockets import connect
-from multiprocessing.pool import ThreadPool
+# from multiprocessing.pool import ThreadPool
+from concurrent.futures import ProcessPoolExecutor
 from config import Config
 
 
@@ -76,33 +77,18 @@ async def get_event():
         subscription_response = await ws.recv()
         print(subscription_response)
 
-        with ThreadPool() as pool:
+        with ProcessPoolExecutor(4) as executor:
             while True:
                 try:
                     message = await asyncio.wait_for(ws.recv(), timeout=15)
 
                     # issue a task asynchronously
-                    async_result = pool.apply_async(evaluate, args=(message,))
+                    future = executor.submit(evaluate, message)
+                    print(future.result())
 
-                    # wait for the task to complete
-                    # async_result.wait()
-
-                    # txHash = response['params']['result']
-                    # print(tx)
-                    # Uncomment lines below if you want to monitor transactions to
-                    # a specific address
-                    # tx = web3.eth.get_transaction(txHash)
-                    # if tx.to == account:
-                    #     print("Pending transaction found with the following details:")
-                    #     print({
-                    #         "hash": txHash,
-                    #         "from": tx["from"],
-                    #         "value": web3.fromWei(tx["value"], 'ether')
-                    #     })
-                    pass
                 except:
                     print("[ERROR]")
-                    pass
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()

@@ -16,6 +16,13 @@ key = Config.BSC_ACCOUNT_ADDR_1
 account2 = Config.BSC_ACCOUNT_ADDR_2
 
 
+class Frangipane:
+    """
+        Snipes
+    """
+    def __init__(self, ):
+        ...
+
 def transact_base_currency(from_addr,
                            from_key,
                            to_addr,

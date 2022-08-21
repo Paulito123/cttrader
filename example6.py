@@ -10,7 +10,6 @@ ws_url = Config.BSC_WSS_URL
 http_url = Config.BSC_HTTP_URL
 web3 = Web3(Web3.HTTPProvider(http_url))
 
-# Used if you want to monitor ETH transactions to a specific address
 account = Config.BSC_ACCOUNT_KEY_1
 key = Config.BSC_ACCOUNT_ADDR_1
 account2 = Config.BSC_ACCOUNT_ADDR_2
@@ -20,7 +19,7 @@ async def get_event():
     async with connect(ws_url) as ws:
         await ws.send('{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}')
         subscription_response = await ws.recv()
-        # print(subscription_response)
+        print(subscription_response)
 
         while True:
             try:
