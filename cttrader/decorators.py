@@ -2,8 +2,8 @@ import functools
 from typing import Callable, List, TYPE_CHECKING, TypeVar, Optional
 from typing_extensions import ParamSpec, Concatenate
 
-from .types import AddressLike
-from .constants import ETH_ADDRESS
+from cttrader.types import AddressLike
+from cttrader.constants import ETH_ADDRESS
 
 if TYPE_CHECKING:
     from .uniswap import Uniswap

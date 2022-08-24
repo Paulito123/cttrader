@@ -1,1 +1,1 @@
-from . import exceptions
+from cttrader import exceptions

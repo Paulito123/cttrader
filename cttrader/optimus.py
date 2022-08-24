@@ -15,11 +15,11 @@ from web3.types import (
 from eth_typing.evm import Address, ChecksumAddress
 from hexbytes import HexBytes
 
-from .types import AddressLike
-from .token import ERC20Token
-from .tokens import get_tokens
-from .exceptions import InvalidToken, InsufficientBalance
-from .util import (
+from cttrader.types import AddressLike
+from cttrader.tokenbase import ERC20Token
+from cttrader.tokens import get_tokens
+from cttrader.exceptions import InvalidToken, InsufficientBalance
+from cttrader.util import (
     _str_to_addr,
     _addr_to_str,
     _validate_address,
@@ -27,8 +27,8 @@ from .util import (
     _load_contract_erc20,
     is_same_address,
 )
-from .decorators import supports, check_approval
-from .constants import (
+from cttrader.decorators import supports, check_approval
+from cttrader.constants import (
     _netid_to_name,
     _factory_contract_addresses_v1,
     _factory_contract_addresses_v2,
@@ -90,7 +90,6 @@ class PrimeBsc:
                 f"Invalid version '{self.version}', only 2 supported"
             )  # pragma: no cover
 
-        # TODO: Write tests for slippage
         self.default_slippage = default_slippage
         self.use_estimate_gas = use_estimate_gas
 

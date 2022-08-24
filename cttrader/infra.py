@@ -1,117 +1,132 @@
 import asyncio
 import json
+import time
 import requests
+import os
+
 from web3 import Web3
 from websockets import connect
 from multiprocessing.pool import ThreadPool
 from config import Config
+from typing import Union, Optional, List, Dict
+
+from cttrader.util import (
+    _str_to_addr
+)
+from cttrader.types import (
+    AddressLike,
+    ListenLoopModus
+)
 
 
-ws_url = Config.BSC_WSS_URL
-http_url = Config.BSC_HTTP_URL
-web3 = Web3(Web3.HTTPProvider(http_url))
-
-account = Config.BSC_ACCOUNT_KEY_1
-key = Config.BSC_ACCOUNT_ADDR_1
-account2 = Config.BSC_ACCOUNT_ADDR_2
-
-
-class Frangipane:
+class ListenLoop:
     """
-        Snipes
+        A ListenLoop runs a specific program depending on its configured modus.
+        The available modi are:
+        - cancel_all: cancel all transactions that have been found as pending.
     """
-    def __init__(self, ):
-        ...
 
-def transact_base_currency(from_addr,
-                           from_key,
-                           to_addr,
-                           gwei_amt,
-                           gas,
-                           gas_price=0,
-                           nonce=None):
-    try:
-        # Get the nonce.  Prevents one from sending the transaction twice
-        nonce = nonce if nonce else web3.eth.getTransactionCount(from_addr)
-        gas_price = gas_price if gas_price > 0 else web3.eth.gas_price
-        # Build a transaction in a dictionary
-        tx = {
-            'nonce': nonce,
-            'to': to_addr,
-            'value': gwei_amt,
-            'gas': gas,
-            'gasPrice': gas_price
-        }
+    modus: ListenLoopModus
+    address_list: Dict[Union[AddressLike, str, None], Union[str, None]] = {}
 
-        # Sign the transaction
-        signed_tx = web3.eth.account.sign_transaction(tx, from_key)
+    w3: Web3
+    ws_url: str
 
-        # Send transaction
-        tx_hash = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
-        output = web3.toHex(tx_hash)
-    except Exception as ex:
-        print(ex)
-        output = None
+    def __init__(self,
+                 modus: ListenLoopModus,
+                 _address_list: Dict[Union[AddressLike, str, None], Union[str, None]],
+                 provider: str = None,
+                 web3: Web3 = None,
+                 wss_url: str = None,
+                 ) -> None:
 
-    # Return transaction hash
-    return output
+        self.modus = modus
+        self.listening = False
+        self.wss_url = wss_url
 
+        for addr in _address_list.keys():
+            address = _str_to_addr(
+                    addr
+                    or "0x0000000000000000000000000000000000000000"
+                )
+            if address not in self.address_list.keys():
+                pk = (
+                        _address_list[addr]
+                        or "0x0000000000000000000000000000000000000000000000000000000000000000"
+                )
+                self.address_list[address] = pk
 
-def evaluate(message):
-    response = json.loads(message)
-    tx = web3.eth.get_transaction(response['params']['result'])
-    if tx['from'] == account and tx['value'] > 0:
-        # Cancel a transaction by submitting an empty transaction with same nonce.
-        ctx = transact_base_currency(account,
-                               key,
-                               account,
-                               0,
-                               tx['gas']+1,
-                               tx['gasPrice']+1,
-                               tx['nonce'])
-        print(f"tx={tx}")
-        print(f"ctx={ctx}")
+        if web3:
+            self.w3 = web3
+        else:
+            # Initialize web3. Extra provider for testing.
+            if not provider:
+                provider = os.environ["PROVIDER"]
+            self.w3 = Web3(Web3.HTTPProvider(provider, request_kwargs={"timeout": 60}))
 
-    else:
-        print(f'{tx}')
-        # print('.')
+        self.loop = asyncio.get_event_loop()
 
+    def evaluate(self, message):
+        response = json.loads(message)
+        tx = web3.eth.get_transaction(response['params']['result'])
+        if tx['from'] in self.address_list.keys() and tx['value'] > 0:
+            # Cancel a transaction by submitting an empty transaction with same nonce.
+            # ctx = transact_base_currency(account,
+            #                              key,
+            #                              account,
+            #                              0,
+            #                              tx['gas'] + 1,
+            #                              tx['gasPrice'] + 1,
+            #                              tx['nonce'])
+            print(f"tx={tx}")
+            # print(f"ctx={ctx}")
+        else:
+            print(f'{tx}')
 
-async def get_event():
-    async with connect(ws_url) as ws:
-        await ws.send('{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}')
-        subscription_response = await ws.recv()
-        print(subscription_response)
+    def toggle_listen(self):
+        self.listening = False if self.listening else True
+        while self.listening:
+            self.loop.run_until_complete(self.listen())
+        return None
 
-        with ThreadPool() as pool:
-            while True:
-                try:
-                    message = await asyncio.wait_for(ws.recv(), timeout=15)
+    async def listen(self) -> None:
+        async with connect(ws_url) as ws:
+            await ws.send(
+                '{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": ["newPendingTransactions"]}')
+            subscription_response = await ws.recv()
+            print(subscription_response)
 
-                    # issue a task asynchronously
-                    async_result = pool.apply_async(evaluate, args=(message,))
+            with ThreadPool() as pool:
+                while True:
+                    try:
+                        message = await asyncio.wait_for(ws.recv(), timeout=15)
 
-                    # wait for the task to complete
-                    # async_result.wait()
+                        # issue a task asynchronously
+                        async_result = pool.apply_async(self.evaluate, args=(message,))
+                    except Exception as ex:
+                        print(f"[ERROR]:{ex}")
+                        pass
+        return None
 
-                    # txHash = response['params']['result']
-                    # print(tx)
-                    # Uncomment lines below if you want to monitor transactions to
-                    # a specific address
-                    # tx = web3.eth.get_transaction(txHash)
-                    # if tx.to == account:
-                    #     print("Pending transaction found with the following details:")
-                    #     print({
-                    #         "hash": txHash,
-                    #         "from": tx["from"],
-                    #         "value": web3.fromWei(tx["value"], 'ether')
-                    #     })
-                    pass
-                except:
-                    print("[ERROR]")
-                    pass
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    while True:
-        loop.run_until_complete(get_event())
+    ws_url = Config.BSC_WSS_URL
+    http_url = Config.BSC_HTTP_URL
+    web3 = Web3(Web3.HTTPProvider(http_url))
+
+    account = Config.BSC_ACCOUNT_KEY_1
+    key = Config.BSC_ACCOUNT_ADDR_1
+    account2 = Config.BSC_ACCOUNT_ADDR_2
+
+    f = ListenLoop(ListenLoopModus.CANCEL_ALL,
+                   {account: key},
+                   None,
+                   web3,
+                   ws_url)
+
+    print("start listening")
+    f.toggle_listen()
+    # print("sleepy time...")
+    # time.sleep(30)
+    # print("stop listening")
+    # f.toggle_listen()

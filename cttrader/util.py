@@ -7,7 +7,7 @@ from web3 import Web3
 from web3.exceptions import NameNotFound
 from web3.contract import Contract
 
-from .types import AddressLike, Address
+from cttrader.types import AddressLike, Address
 
 
 def _str_to_addr(s: Union[AddressLike, str]) -> Address:
@@ -56,3 +56,7 @@ def _load_contract(w3: Web3, abi_name: str, address: AddressLike) -> Contract:
 
 def _load_contract_erc20(w3: Web3, address: AddressLike) -> Contract:
     return _load_contract(w3, "erc20", address)
+
+
+if __name__ == '__main__':
+    print(1)

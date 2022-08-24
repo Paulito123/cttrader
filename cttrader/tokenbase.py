@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .types import AddressLike
+from cttrader.types import AddressLike
 
 
 @dataclass
@@ -28,3 +28,7 @@ class ERC20Token(BaseToken):
 
     def __repr__(self) -> str:
         return f"Token({self.symbol}, {self.address!r}, {self.decimals})"
+
+
+if __name__ == "__main__":
+    print(1)
